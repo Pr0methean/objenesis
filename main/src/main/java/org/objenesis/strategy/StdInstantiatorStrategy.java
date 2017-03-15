@@ -21,6 +21,7 @@ import org.objenesis.instantiator.android.Android17Instantiator;
 import org.objenesis.instantiator.android.Android18Instantiator;
 import org.objenesis.instantiator.basic.AccessibleInstantiator;
 import org.objenesis.instantiator.basic.ObjectInputStreamInstantiator;
+import org.objenesis.instantiator.basic.ProxyingInstantiator;
 import org.objenesis.instantiator.gcj.GCJInstantiator;
 import org.objenesis.instantiator.perc.PercInstantiator;
 import org.objenesis.instantiator.sun.SunReflectionFactoryInstantiator;
@@ -29,6 +30,8 @@ import org.objenesis.instantiator.sun.UnsafeFactoryInstantiator;
 import java.io.Serializable;
 
 import static org.objenesis.strategy.PlatformDescription.*;
+
+import static java.lang.reflect.Modifier.isAbstract;
 
 /**
  * Guess the best instantiator for a given class. The instantiator will instantiate the class
@@ -54,6 +57,11 @@ public class StdInstantiatorStrategy extends BaseInstantiatorStrategy {
     * @return The ObjectInstantiator for the class
     */
    public <T> ObjectInstantiator<T> newInstantiatorOf(Class<T> type) {
+      
+      if(isAbstract(type.getModifiers())) {
+         // only ProxyingInstantiator can instantiate an abstract class
+         return new ProxyingInstantiator<T>(type);
+      }
 
       if(PlatformDescription.isThisJVM(HOTSPOT) || PlatformDescription.isThisJVM(OPENJDK)) {
          if(PlatformDescription.isGoogleAppEngine()) {
